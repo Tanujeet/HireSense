@@ -79,7 +79,7 @@ const DashboardPage = () => {
                   </TableCell>
                   <TableCell>{resume.uploadedAt}</TableCell>
                   <TableCell className="text-right">
-                    <AiFeedbackModal fileUrl={resume.fileUrl} />
+                    <AiFeedbackModal resumeId={resume.id} />
                   </TableCell>
                 </TableRow>
               ))

@@ -20,7 +20,7 @@ const DashboardPage = () => {
     id: string;
     title: string;
     atsScore: number;
-    uploadedAt: string; // format it if ISO
+    uploadedAt: string;
     fileUrl: string;
   };
 

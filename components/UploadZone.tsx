@@ -47,7 +47,7 @@ export const ResumeUploader = () => {
       className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-white "
       config={{ mode: "auto" }}
       appearance={{
-        uploadIcon: "w-12 h-12", // Or 'w-16 h-16' - adjust as needed
+        uploadIcon: "w-12 h-12",
       }}
       content={{
         label: "Drag and drop your resume here",

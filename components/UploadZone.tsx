@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { axiosInstance } from "@/lib/axios";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
+type ResumeUploaderProps = {
+  onUploadSuccess?: () => void;
+};
 
-export const ResumeUploader = () => {
+export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
   const router = useRouter();
 
   const handleComplete = async (res: any) => {

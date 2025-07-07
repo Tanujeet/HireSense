@@ -26,17 +26,17 @@ const DashboardPage = () => {
 
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchResumes = async () => {
+    try {
+      const res = await axiosInstance.get("/resume/all");
+      setResumes(res.data);
+    } catch (err) {
+      console.error("Error fetching resumes", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchResumes = async () => {
-      try {
-        const res = await axiosInstance.get("/resume/all");
-        setResumes(res.data);
-      } catch (err) {
-        console.error("Error fetching resumes", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchResumes();
   }, []);
 
@@ -45,7 +45,7 @@ const DashboardPage = () => {
       <h1 className="text-4xl font-bold mb-10">Dashboard</h1>
 
       <div className="mb-12">
-        <ResumeUploader />
+        <ResumeUploader onUploadSuccess={fetchResumes} />
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">History</h2>

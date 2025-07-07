@@ -17,9 +17,15 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(response.data);
     const result = await pdfParse(buffer);
     const resumeText = result.text;
-
+    if (!fileUrl) {
+      return NextResponse.json({ error: "Missing fileUrl" }, { status: 400 });
+    }
     return NextResponse.json({ resumeText });
   } catch (err) {
     console.error("Failed to Parse ", err);
+    return NextResponse.json(
+      { error: "Failed to parse resume" },
+      { status: 500 }
+    );
   }
 }

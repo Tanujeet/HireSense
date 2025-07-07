@@ -41,5 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ result });
   } catch (err) {
     console.error("Failed to get Ai", err);
+    
+    return new NextResponse("Error analyzing resume with AI", { status: 500 });
   }
 }

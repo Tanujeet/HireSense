@@ -69,7 +69,7 @@ Avoid full sentences. Make the query concise and search-friendly.
 
       const jobs = joobleRes.data.jobs || [];
 
-      // ✨ Step 3: Clean top 8 jobs
+
       const cleanedJobs = jobs.slice(0, 8).map((job: any) => ({
         title: job.title,
         company: job.company,

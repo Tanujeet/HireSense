@@ -1,34 +1,34 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "./ui/button";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { axiosInstance } from "@/lib/axios";
 
-type AiFeedbackModalProps = {
+interface Props {
   fileUrl: string;
-};
+}
 
-const AiFeedbackModal = ({ fileUrl }: AiFeedbackModalProps) => {
+const AiFeedbackModal = ({ fileUrl }: Props) => {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const handleOpen = async () => {
     setLoading(true);
     try {
+      // Step 1: Parse
       const parseRes = await axiosInstance.post("/api/resume/parse", {
         fileUrl,
       });
       const resumeText = parseRes.data.resumeText;
 
+      // Step 2: Analyze
       const analyzeRes = await axiosInstance.post("/api/resume/analyze", {
         resumeText,
       });
-
       setSummary(analyzeRes.data.result);
     } catch (err) {
-      console.error("Error generating AI feedback:", err);
-      setSummary("Unable to load feedback. Please try again.");
+      setSummary("Error loading AI feedback.");
     }
     setLoading(false);
   };
@@ -36,14 +36,14 @@ const AiFeedbackModal = ({ fileUrl }: AiFeedbackModalProps) => {
   return (
     <Dialog onOpenChange={(isOpen) => isOpen && handleOpen()}>
       <DialogTrigger asChild>
-        <Button variant="link" className="text-blue-600 px-0">
+        <Button variant="outline" className="text-blue-600">
           View AI Feedback
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl">
         <h2 className="text-xl font-semibold mb-4">AI Feedback</h2>
-        <p className="whitespace-pre-line text-sm text-gray-700">
-          {loading ? "Generating feedback..." : summary}
+        <p className="whitespace-pre-line text-gray-800 text-sm">
+          {loading ? "Analyzing..." : summary}
         </p>
       </DialogContent>
     </Dialog>

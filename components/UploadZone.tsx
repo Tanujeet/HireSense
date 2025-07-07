@@ -4,7 +4,7 @@ import { UploadDropzone } from "@/lib/uploadthing";
 import { useRouter } from "next/navigation";
 import { axiosInstance } from "@/lib/axios";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
-import { UploadIcon } from "lucide-react";
+
 
 export const ResumeUploader = () => {
   const router = useRouter();

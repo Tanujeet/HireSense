@@ -17,13 +17,13 @@ const AiFeedbackModal = ({ fileUrl }: Props) => {
     setLoading(true);
     try {
       // Step 1: Parse
-      const parseRes = await axiosInstance.post("/api/resume/parse", {
+      const parseRes = await axiosInstance.post("/resume/parse", {
         fileUrl,
       });
       const resumeText = parseRes.data.resumeText;
 
       // Step 2: Analyze
-      const analyzeRes = await axiosInstance.post("/api/resume/analyze", {
+      const analyzeRes = await axiosInstance.post("/resume/analyze", {
         resumeText,
       });
       setSummary(analyzeRes.data.result);

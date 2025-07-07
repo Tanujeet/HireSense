@@ -29,7 +29,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchResumes = async () => {
       try {
-        const res = await axiosInstance.get("resume/all");
+        const res = await axiosInstance.get("/resume/all");
         setResumes(res.data);
       } catch (err) {
         console.error("Error fetching resumes", err);

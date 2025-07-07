@@ -14,17 +14,17 @@ export const ResumeUploader = () => {
     if (!fileUrl) return;
 
     try {
-      const parseRes = await axiosInstance.post("/api/resume/parse", {
+      const parseRes = await axiosInstance.post("/resume/parse", {
         fileUrl,
       });
       const resumeText = parseRes.data.resumeText;
 
-      const analyzeRes = await axiosInstance.post("/api/resume/analyze", {
+      const analyzeRes = await axiosInstance.post("/resume/analyze", {
         resumeText,
       });
       const result = analyzeRes.data.result;
 
-      const saveRes = await axiosInstance.post("/api/resume/save", {
+      const saveRes = await axiosInstance.post("/resume/save", {
         title: "Uploaded Resume",
         fileUrl,
         content: resumeText,

@@ -1,7 +1,20 @@
-import { createRouteHandler } from "uploadthing/next";
+// ✅ File: app/api/uploadthing/core.ts
 
-import { ourFileRouter } from "@/lib/uploadthing";
+import { createUploadthing, type FileRouter } from "uploadthing/next";
+import { getAuth } from "@clerk/nextjs/server";
 
-export const { GET, POST } = createRouteHandler({
-  router: ourFileRouter,
-});
+const f = createUploadthing();
+
+export const ourFileRouter = {
+  resumeUploader: f({ pdf: { maxFileSize: "4MB" } })
+    .middleware(async ({ req }) => {
+      const { userId } = await getAuth(req);
+      if (!userId) throw new Error("Unauthorized");
+      return { userId };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Uploaded:", file.url);
+    }),
+} satisfies FileRouter;
+
+export type OurFileRouter = typeof ourFileRouter;

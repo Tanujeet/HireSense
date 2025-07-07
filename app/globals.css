@@ -120,3 +120,9 @@
     @apply bg-background text-foreground;
   }
 }
+/* In your global CSS file or a module CSS file for this component */
+.ut-upload-dropzone img { /* assuming ut-upload-dropzone is on the parent */
+  width: 50px; /* Or max-width: 100% */
+  height: auto;
+  object-fit: contain;
+}

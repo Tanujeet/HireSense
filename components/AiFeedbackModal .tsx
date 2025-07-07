@@ -5,49 +5,49 @@ import { Button } from "./ui/button";
 import { useState } from "react";
 import { axiosInstance } from "@/lib/axios";
 
-const AiSummary = () => {
+type AiFeedbackModalProps = {
+  fileUrl: string;
+};
+
+const AiFeedbackModal = ({ fileUrl }: AiFeedbackModalProps) => {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const handleOpen = async () => {
     setLoading(true);
     try {
-   
-      const fileUrl = "URL_TO_LATEST_UPLOADED_RESUME";
-
-
       const parseRes = await axiosInstance.post("/api/resume/parse", {
         fileUrl,
       });
       const resumeText = parseRes.data.resumeText;
 
-      
       const analyzeRes = await axiosInstance.post("/api/resume/analyze", {
         resumeText,
       });
-      const result = analyzeRes.data.result;
 
-      setSummary(result);
+      setSummary(analyzeRes.data.result);
     } catch (err) {
-      console.error("Error generating AI summary:", err);
-      setSummary("Unable to load summary. Please try again.");
+      console.error("Error generating AI feedback:", err);
+      setSummary("Unable to load feedback. Please try again.");
     }
     setLoading(false);
   };
-  
+
   return (
     <Dialog onOpenChange={(isOpen) => isOpen && handleOpen()}>
       <DialogTrigger asChild>
-        <Button variant="outline">View AI Summary</Button>
+        <Button variant="link" className="text-blue-600 px-0">
+          View AI Feedback
+        </Button>
       </DialogTrigger>
-      <DialogContent>
-        <h2 className="text-xl font-semibold mb-4">AI Summary</h2>
-        <p className="text-gray-700 whitespace-pre-line">
-          {loading ? "Generating summary..." : summary}
+      <DialogContent className="max-w-2xl">
+        <h2 className="text-xl font-semibold mb-4">AI Feedback</h2>
+        <p className="whitespace-pre-line text-sm text-gray-700">
+          {loading ? "Generating feedback..." : summary}
         </p>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default AiSummary;
+export default AiFeedbackModal;

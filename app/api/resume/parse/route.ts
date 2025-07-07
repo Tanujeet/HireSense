@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore
 import pdfParse from "pdf-parse";
 
 export async function POST(req: NextRequest) {

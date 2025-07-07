@@ -4,45 +4,40 @@ import { useEffect, useState } from "react";
 
 import {
   Table,
-  TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
+  TableHeader,
+  TableHead,
+  TableBody,
 } from "@/components/ui/table";
-import { UploadDropzone } from "@uploadthing/react";
+
 import AiFeedbackModal from "@/components/AiFeedbackModal ";
 import { ResumeUploader } from "@/components/UploadZone";
-
-const mockResumes = [
-  {
-    id: "1",
-    title: "Software Engineer Resume",
-    atsScore: 85,
-    uploadedAt: "2024-01-15",
-    fileUrl: "https://cdn.uploadthing.com/resume1.pdf",
-  },
-  {
-    id: "2",
-    title: "Project Manager Resume",
-    atsScore: 72,
-    uploadedAt: "2023-12-20",
-    fileUrl: "https://cdn.uploadthing.com/resume2.pdf",
-  },
-  {
-    id: "3",
-    title: "Marketing Specialist Resume",
-    atsScore: 91,
-    uploadedAt: "2023-11-05",
-    fileUrl: "https://cdn.uploadthing.com/resume3.pdf",
-  },
-];
+import { axiosInstance } from "@/lib/axios";
 
 const DashboardPage = () => {
-  const [resumes, setResumes] = useState<typeof mockResumes>([]);
+  type Resume = {
+    id: string;
+    title: string;
+    atsScore: number;
+    uploadedAt: string; // format it if ISO
+    fileUrl: string;
+  };
 
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    setResumes(mockResumes); // Replace with real API call in future
+    const fetchResumes = async () => {
+      try {
+        const res = await axiosInstance.get("resume/all");
+        setResumes(res.data);
+      } catch (err) {
+        console.error("Error fetching resumes", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResumes();
   }, []);
 
   return (
@@ -64,19 +59,31 @@ const DashboardPage = () => {
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {resumes.map((resume) => (
-              <TableRow key={resume.id}>
-                <TableCell>{resume.title}</TableCell>
-                <TableCell className="text-blue-600 font-semibold">
-                  {resume.atsScore}%
-                </TableCell>
-                <TableCell>{resume.uploadedAt}</TableCell>
-                <TableCell className="text-right">
-                  <AiFeedbackModal fileUrl={resume.fileUrl} />
+            {resumes.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-gray-500 py-6"
+                >
+                  No resumes uploaded yet.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              resumes.map((resume) => (
+                <TableRow key={resume.id}>
+                  <TableCell>{resume.title}</TableCell>
+                  <TableCell className="text-blue-600 font-semibold">
+                    {resume.atsScore}%
+                  </TableCell>
+                  <TableCell>{resume.uploadedAt}</TableCell>
+                  <TableCell className="text-right">
+                    <AiFeedbackModal fileUrl={resume.fileUrl} />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

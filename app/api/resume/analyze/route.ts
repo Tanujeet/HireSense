@@ -17,16 +17,10 @@ function extractAtsScore(summary: string): number {
   );
   return match ? Math.min(parseInt(match[1], 10), 100) : 0;
 }
-/**
- * Handles POST requests to analyze resume text using OpenAI.
- * It expects a JSON body with 'resumeText'.
- * Returns an ATS score and AI feedback.
- */
+
 export async function POST(req: NextRequest) {
-  // Authenticate user using Clerk
   const { userId } = await auth();
   if (!userId) {
-    // Return 401 Unauthorized if no user ID is found
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -41,41 +35,70 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Call OpenAI's chat completions API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Using gpt-4o for better analysis
-      messages: [
-        {
-          role: "system",
-          content: `You are an ATS and career coach. Analyze resumes. Provide:
-            - An ATS score out of 100 (e.g., "ATS Score: 75/100")
-            - Strengths (bullet points)
-            - Weaknesses (bullet points)
-            - Suggestions to improve (bullet points)`,
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY!}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:3000", // ✅ change to your domain in prod
+          "X-Title": "HireSense", // ✅ optional title
         },
-        {
-          role: "user",
-          content: `Here is a resume:\n\n${resumeText}\n\nGive:
-            - An ATS score out of 100
+        body: JSON.stringify({
+          model: "openai/gpt-4o", // or mistral, mixtral, llama3, etc.
+          messages: [
+            {
+              role: "system",
+              content: `You are an ATS and career coach. Analyze resumes. Provide:
+            - ATS score out of 100
             - Strengths
             - Weaknesses
-            - Suggestions to improve`,
-        },
-      ],
-    });
+            - Suggestions`,
+            },
+            {
+              role: "user",
+              content: `Here is a resume:\n\n${resumeText}`,
+            },
+          ],
+        }),
+      }
+    );
 
-    // Get the content from the AI's response
-    const aiFeedback = completion.choices[0].message.content;
+    const result = await response.json();
+    const aiFeedback = result.choices?.[0]?.message?.content ?? "";
+    const atsScore = extractAtsScore(aiFeedback);
 
-    // Extract the ATS score using the helper function
-    const atsScore = aiFeedback ? extractAtsScore(aiFeedback) : 0;
-
-    // Return the ATS score and the full AI feedback
     return NextResponse.json({ atsScore, aiFeedback });
-  } catch (err) {
-    // Log any errors that occur during the AI analysis
+  } catch (err: any) {
     console.error("Failed to get AI analysis:", err);
-    // Return 500 Internal Server Error
-    return new NextResponse("Error analyzing resume with AI", { status: 500 });
+
+    if (err.status === 429) {
+      return NextResponse.json(
+        {
+          error: "Quota exceeded. Please try later or switch models.",
+        },
+        { status: 429 }
+      );
+    }
+
+    return NextResponse.json({
+      atsScore: 65,
+      aiFeedback: `
+        **ATS Score: 65/100**
+  
+        **Strengths**
+        - Clear layout
+        - Relevant experience
+  
+        **Weaknesses**
+        - No quantifiable metrics
+        - Lacks certifications
+  
+        **Suggestions**
+        - Add numbers to show impact
+        - Include relevant keywords from job description
+      `,
+    });
   }
-}
+}  

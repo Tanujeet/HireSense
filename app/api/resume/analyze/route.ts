@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
 /**
- * Extracts the ATS score (a number) from a given AI response text.
+ * Extracts ATS score from AI feedback string (caps at 100).
  */
 function extractAtsScore(summary: string): number {
   const match = summary.match(
@@ -13,7 +13,6 @@ function extractAtsScore(summary: string): number {
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -28,57 +27,76 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY!}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "HireSense",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are an ATS and career coach. Analyze resumes and give:
-              - ATS score out of 100
-              - Strengths
-              - Weaknesses
-              - Suggestions`,
-            },
-            {
-              role: "user",
-              content: `Here is a resume:\n\n${resumeText}`,
-            },
-          ],
-        }),
-      }
+    const response = await fetch("http://localhost:11434/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama3",
+        messages: [
+          {
+            role: "system",
+            content: `You are an ATS (Applicant Tracking System) and resume evaluator.
+    
+    You must ALWAYS reply in the following format:
+    
+    **ATS Score:** X/100
+    
+    **Strengths**
+    - ...
+    - ...
+    
+    **Weaknesses**
+    - ...
+    - ...
+    
+    **Suggestions**
+    - ...
+    - ...
+    
+    Do NOT skip sections. Do NOT reply with generic advice. Focus only on the resume provided.`,
+          },
+          {
+            role: "user",
+            content: `Here is the resume:\n\n${resumeText}`,
+          },
+        ],
+      }),
+    });
+    
+
+    const result = await response.json();
+    console.log(
+      "🧠 OpenRouter AI Raw Result:",
+      JSON.stringify(result, null, 2)
     );
 
-    const data = await response.json();
-    const result = await response.json();
-    console.log("OpenRouter raw result:", result); // 👈 log this
-
-    const aiFeedback = data?.choices?.[0]?.message?.content ?? "";
-
-    if (!aiFeedback) {
-      return NextResponse.json({
-        atsScore: 60,
-        aiFeedback: `⚠️ AI didn't return valid feedback. Please try again later.`,
-      });
+    if (!result.choices || !result.choices[0]?.message?.content) {
+      return NextResponse.json(
+        {
+          atsScore: 60,
+          aiFeedback:
+            "⚠️ AI did not return valid feedback. Please try again later.",
+        },
+        { status: 200 }
+      );
     }
+
+    const aiFeedback = result.choices[0].message.content.trim();
     const atsScore = extractAtsScore(aiFeedback);
 
     return NextResponse.json({ atsScore, aiFeedback });
-  } catch (error: any) {
-    console.error("AI analysis failed:", error);
+  } catch (error) {
+    console.error("❌ AI analysis failed:", error);
 
-    return NextResponse.json({
-      atsScore: 0,
-      aiFeedback: `We couldn’t analyze your resume due to a server issue. Please try again later.`,
-    });
+    return NextResponse.json(
+      {
+        atsScore: 60,
+        aiFeedback:
+          "❌ We couldn't analyze your resume due to a server or API issue. Please try again later.",
+      },
+      { status: 500 }
+    );
   }
 }

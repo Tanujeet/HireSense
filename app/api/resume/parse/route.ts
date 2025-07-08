@@ -61,13 +61,21 @@ export async function POST(req: NextRequest) {
       // 2. Parse the PDF content using pdf-to-text
       // pdf_to_text.pdfToText takes a file path
       parsedText = await new Promise((resolve, reject) => {
-        pdf_to_text.pdfToText(tempFilePath!, (err: any, data: string) => {
-          if (err) {
-            console.error("[API/RESUME/PARSE] pdf-to-text error:", err);
-            return reject(new Error(`pdf-to-text failed: ${err.message}`));
+        const pdftotextPath =
+          "C:\\Users\\singh\\OneDrive\\Desktop\\poppler-24.08.0\\Library\\bin\\pdftotext.exe";
+
+        pdf_to_text.pdfToText(
+          tempFilePath!,
+          { pdftotext_path: pdftotextPath } as any, // 👈 Override type here
+          (err: any, data: string) => {
+            if (err) {
+              console.error("[API/RESUME/PARSE] pdf-to-text error:", err);
+              return reject(new Error(`pdf-to-text failed: ${err.message}`));
+            }
+            resolve(data);
           }
-          resolve(data);
-        });
+        );
+        
       });
       console.log(
         `[API/RESUME/PARSE] Successfully parsed PDF content. Length: ${parsedText.length}`

@@ -1,18 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { UploadDropzone } from "@/lib/uploadthing";
 import { useRouter } from "next/navigation";
 import { axiosInstance } from "@/lib/axios";
+import { useUser } from "@clerk/nextjs";
+import { UploadDropzone } from "@/lib/uploadthing";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
-
-// Assuming you have a way to get the current user's ID
-// This is a placeholder. In a real app, you'd get this from your auth context (e.g., NextAuth.js useSession hook)
-// Example:
-// import { useSession } from "next-auth/react";
-// const { data: session } = useSession();
-// const userId = session?.user?.id;
-const DUMMY_USER_ID = "clx1b2d3e4f5g6h7i8j9k0l1"; // REPLACE WITH ACTUAL USER ID FROM AUTH
 
 type ResumeUploaderProps = {
   onUploadSuccess?: () => void;
@@ -22,6 +15,9 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { user } = useUser();
+  const userId = user?.id;
 
   const handleComplete = async (res: any) => {
     setIsProcessing(true);
@@ -33,6 +29,12 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
 
     if (!fileUrl) {
       setErrorMessage("Upload failed: No file URL returned.");
+      setIsProcessing(false);
+      return;
+    }
+
+    if (!userId) {
+      setErrorMessage("User not authenticated. Please log in.");
       setIsProcessing(false);
       return;
     }
@@ -55,22 +57,16 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
         title: resumeTitle,
         fileUrl,
         content: resumeText,
-        atsScore: atsScore,
-        aiFeedback: aiFeedback,
-        userId: DUMMY_USER_ID,
+        atsScore,
+        aiFeedback,
+        userId,
       });
 
-      console.log(
-        "Resume Upload and Analysis Complete! Saved Data:",
-        saveRes.data
-      );
+      console.log("Resume Upload and Analysis Complete!", saveRes.data);
       router.refresh();
-      if (onUploadSuccess) {
-        onUploadSuccess();
-      }
+      if (onUploadSuccess) onUploadSuccess();
     } catch (err: any) {
       console.error("Upload and Analysis Error:", err);
-
       const message =
         err.response?.data?.error ||
         err.message ||
@@ -86,21 +82,19 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       <UploadDropzone<OurFileRouter, "resumeUploader">
         endpoint="resumeUploader"
         onClientUploadComplete={handleComplete}
-        // Improve error display beyond a simple alert
         onUploadError={(err: any) => {
           console.error("Uploadthing Error:", err);
           setErrorMessage(`File upload failed: ${err.message}`);
-          setIsProcessing(false); // Stop processing state on upload error
+          setIsProcessing(false);
         }}
         onUploadBegin={() => {
-          setIsProcessing(true); // Indicate processing has started even before handleComplete
+          setIsProcessing(true);
           setErrorMessage(null);
         }}
         className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-white"
         config={{ mode: "auto" }}
         appearance={{
           uploadIcon: "w-12 h-12",
-          // You can customize other elements here
         }}
         content={{
           label: isProcessing
@@ -125,7 +119,6 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
     </div>
   );
 };
-
 
 function extractAtsScore(summary: string): number {
   const match = summary.match(/ATS score.*?(\d{1,3})/i);

@@ -71,7 +71,7 @@ const DashboardPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              resumes.map((resume) => (
+              resumes.slice(0, 3).map((resume) => (
                 <TableRow key={resume.id}>
                   <TableCell>{resume.title}</TableCell>
                   <TableCell className="text-blue-600 font-semibold">

@@ -1,15 +1,8 @@
-import { OpenAI } from "openai";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-// Initialize OpenAI client with API key from environment variables
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
 /**
- * Extracts the ATS score (a number) from a given text summary.
- * It looks for patterns like "ATS score XX" or "score out of 100: XX".
- * @param summary The text content returned by the AI.
- * @returns 
+ * Extracts the ATS score (a number) from a given AI response text.
  */
 function extractAtsScore(summary: string): number {
   const match = summary.match(
@@ -20,16 +13,16 @@ function extractAtsScore(summary: string): number {
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
+
   if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Parse the request body to get resumeText
   const { resumeText } = await req.json();
-  if (!resumeText) {
-    // Return 400 Bad Request if resumeText is missing
+
+  if (!resumeText || typeof resumeText !== "string") {
     return NextResponse.json(
-      { error: "Resume text is missing" },
+      { error: "Resume text is missing or invalid." },
       { status: 400 }
     );
   }
@@ -42,19 +35,19 @@ export async function POST(req: NextRequest) {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY!}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000", // ✅ change to your domain in prod
-          "X-Title": "HireSense", // ✅ optional title
+          "HTTP-Referer": "http://localhost:3000",
+          "X-Title": "HireSense",
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o", // or mistral, mixtral, llama3, etc.
+          model: "openai/gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are an ATS and career coach. Analyze resumes. Provide:
-            - ATS score out of 100
-            - Strengths
-            - Weaknesses
-            - Suggestions`,
+              content: `You are an ATS and career coach. Analyze resumes and give:
+              - ATS score out of 100
+              - Strengths
+              - Weaknesses
+              - Suggestions`,
             },
             {
               role: "user",
@@ -65,40 +58,27 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    const data = await response.json();
     const result = await response.json();
-    const aiFeedback = result.choices?.[0]?.message?.content ?? "";
+    console.log("OpenRouter raw result:", result); // 👈 log this
+
+    const aiFeedback = data?.choices?.[0]?.message?.content ?? "";
+
+    if (!aiFeedback) {
+      return NextResponse.json({
+        atsScore: 60,
+        aiFeedback: `⚠️ AI didn't return valid feedback. Please try again later.`,
+      });
+    }
     const atsScore = extractAtsScore(aiFeedback);
 
     return NextResponse.json({ atsScore, aiFeedback });
-  } catch (err: any) {
-    console.error("Failed to get AI analysis:", err);
-
-    if (err.status === 429) {
-      return NextResponse.json(
-        {
-          error: "Quota exceeded. Please try later or switch models.",
-        },
-        { status: 429 }
-      );
-    }
+  } catch (error: any) {
+    console.error("AI analysis failed:", error);
 
     return NextResponse.json({
-      atsScore: 65,
-      aiFeedback: `
-        **ATS Score: 65/100**
-  
-        **Strengths**
-        - Clear layout
-        - Relevant experience
-  
-        **Weaknesses**
-        - No quantifiable metrics
-        - Lacks certifications
-  
-        **Suggestions**
-        - Add numbers to show impact
-        - Include relevant keywords from job description
-      `,
+      atsScore: 0,
+      aiFeedback: `We couldn’t analyze your resume due to a server issue. Please try again later.`,
     });
   }
-}  
+}

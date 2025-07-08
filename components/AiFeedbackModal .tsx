@@ -1,6 +1,11 @@
 "use client";
 
-import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { axiosInstance } from "@/lib/axios";
@@ -34,7 +39,9 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl">
-        <h2 className="text-xl font-semibold mb-4">AI Feedback</h2>
+        <DialogTitle className="text-xl font-semibold mb-4">
+          AI Feedback
+        </DialogTitle>
         <p className="whitespace-pre-line text-gray-800 text-sm">
           {loading ? "Loading..." : summary}
         </p>

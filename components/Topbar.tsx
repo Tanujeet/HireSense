@@ -14,13 +14,12 @@ export function TopBar() {
         <SignedOut>
           <SignInButton>
             <button className="px-4 py-2 text-sm font-Bold hover:underline">
-              Sign In
+              Sign In hy there
             </button>
           </SignInButton>
         </SignedOut>
 
         <SignedIn>
-     
           <UserButton
             appearance={{
               elements: {

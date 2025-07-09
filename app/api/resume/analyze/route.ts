@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-/**
- * Extracts ATS score from AI feedback string (caps at 100).
- */
 function extractAtsScore(summary: string): number {
   const match = summary.match(
     /(?:ATS[\s-]?score|score(?: out of)? 100)?[^\d]{0,5}(\d{1,3})/i

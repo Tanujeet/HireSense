@@ -15,6 +15,7 @@ import { ResumeUploader } from "@/components/UploadZone";
 import { axiosInstance } from "@/lib/axios";
 import AiFeedbackModal from "@/components/AiFeedbackModal ";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/Spinner";
 type Resume = {
   id: string;
   title: string;
@@ -120,14 +121,20 @@ const DashboardPage = () => {
       </div>
 
       {/* ✅ Auto-open Modal After Upload */}
-      {modalResumeId && (
+      {modalResumeId && resumes.find((r) => r.id === modalResumeId) && (
         <AiFeedbackModal
           resumeId={modalResumeId}
           open={true}
-          onOpenChange={(val: boolean) => {
+          onOpenChange={(val) => {
             if (!val) setModalResumeId(null);
           }}
         />
+      )}
+      {modalResumeId && !resumes.find((r) => r.id === modalResumeId) && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm z-50">
+          <Spinner />
+          <p className="text-blue-600 text-lg">Preparing your feedback...</p>
+        </div>
       )}
     </main>
   );

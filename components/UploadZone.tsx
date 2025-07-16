@@ -69,7 +69,8 @@ export const ResumeUploader = ({
       });
 
       console.log("Resume Upload and Analysis Complete!", saveRes.data);
-      const newResumeId = saveRes.data.resume.id; // 👈 assuming backend returns ID
+      const newResumeId = saveRes.data.resumeId;
+      // 👈 assuming backend returns ID
 
       if (onParsedFeedback) onParsedFeedback(newResumeId); // 👈 open modal with that resume
       if (onUploadSuccess) onUploadSuccess();

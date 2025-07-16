@@ -20,6 +20,26 @@ export async function POST(req: NextRequest) {
     const newResume = await prisma.resume.create({
       data: { userId, title, fileUrl, content, atsScore, aiFeedback },
     });
+    // Fetch all resumes for this user, sorted by oldest first
+    // 1. Get all resumes of the user (oldest first)
+    const userResumes = await prisma.resume.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" }, // sorting by creation time
+    });
+
+    // 2. If more than 3, delete the oldest ones
+    if (userResumes.length > 3) {
+      const excessResumes = userResumes.slice(0, userResumes.length - 3);
+
+      for (const resume of excessResumes) {
+        await prisma.resume.delete({
+          where: { id: resume.id },
+        });
+
+        // Optional: also delete from storage using resume.fileUrl if needed
+      }
+    }
+
     return NextResponse.json(
       {
         resumeId: newResume.id,

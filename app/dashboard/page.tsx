@@ -11,21 +11,23 @@ import {
   TableBody,
 } from "@/components/ui/table";
 
-import AiFeedbackModal from "@/components/AiFeedbackModal ";
+
 import { ResumeUploader } from "@/components/UploadZone";
 import { axiosInstance } from "@/lib/axios";
+import AiFeedbackModal from "@/components/AiFeedbackModal ";
+
+type Resume = {
+  id: string;
+  title: string;
+  atsScore: number;
+  uploadedAt: string;
+  fileUrl: string;
+};
 
 const DashboardPage = () => {
-  type Resume = {
-    id: string;
-    title: string;
-    atsScore: number;
-    uploadedAt: string;
-    fileUrl: string;
-  };
-
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+
   const fetchResumes = async () => {
     try {
       const res = await axiosInstance.get("/resume/all");
@@ -36,6 +38,7 @@ const DashboardPage = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchResumes();
   }, []);
@@ -49,6 +52,7 @@ const DashboardPage = () => {
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">History</h2>
+
       <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
         <Table>
           <TableHeader>
@@ -61,7 +65,16 @@ const DashboardPage = () => {
           </TableHeader>
 
           <TableBody>
-            {resumes.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-6 text-gray-400"
+                >
+                  Loading resumes...
+                </TableCell>
+              </TableRow>
+            ) : resumes.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={4}
@@ -73,11 +86,13 @@ const DashboardPage = () => {
             ) : (
               resumes.slice(0, 3).map((resume) => (
                 <TableRow key={resume.id}>
-                  <TableCell>{resume.title}</TableCell>
+                  <TableCell className="font-medium">{resume.title}</TableCell>
                   <TableCell className="text-blue-600 font-semibold">
                     {resume.atsScore}%
                   </TableCell>
-                  <TableCell>{resume.uploadedAt}</TableCell>
+                  <TableCell className="text-gray-600">
+                    {resume.uploadedAt}
+                  </TableCell>
                   <TableCell className="text-right">
                     <AiFeedbackModal resumeId={resume.id} />
                   </TableCell>

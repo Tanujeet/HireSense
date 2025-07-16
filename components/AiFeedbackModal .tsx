@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "./Spinner";
 import { axiosInstance } from "@/lib/axios";
@@ -41,8 +36,10 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleOpen = async () => {
+  const startAnalysis = async () => {
     setLoading(true);
+    setIsOpen(true); // Automatically open the dialog
+
     try {
       const res = await axiosInstance.get(`/resume/${resumeId}/feedback`);
       const feedback = res.data.aiFeedback;
@@ -58,64 +55,64 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (open) handleOpen();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline" className="text-blue-600">
-          View AI Feedback
-        </Button>
-      </DialogTrigger>
+    <>
+      <Button
+        onClick={startAnalysis}
+        variant="outline"
+        className="text-blue-600"
+      >
+        Analyze Resume
+      </Button>
 
-      <DialogContent className="max-w-xl">
-        <DialogTitle className="text-center text-xl font-semibold mb-4">
-          AI Feedback
-        </DialogTitle>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogTitle className="text-center text-xl font-semibold mb-4">
+            AI Feedback
+          </DialogTitle>
 
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[120px]">
-            <Spinner />
-          </div>
-        ) : parsedFeedback ? (
-          <div className="space-y-6 text-sm text-gray-800 text-center max-w-md mx-auto">
-            <p className="text-lg font-semibold text-blue-600">
-              ATS Score: {parsedFeedback.score}
-            </p>
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[120px]">
+              <Spinner />
+            </div>
+          ) : parsedFeedback ? (
+            <div className="space-y-6 text-sm text-gray-800 text-center max-w-md mx-auto">
+              <p className="text-lg font-semibold text-blue-600">
+                ATS Score: {parsedFeedback.score}
+              </p>
 
-            <div className="text-left space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-700">✅ Strengths</h3>
-                <p className="whitespace-pre-wrap text-gray-600">
-                  {parsedFeedback.strengths}
-                </p>
-              </div>
+              <div className="text-left space-y-4">
+                <div>
+                  <h3 className="font-semibold text-gray-700">✅ Strengths</h3>
+                  <p className="whitespace-pre-wrap text-gray-600">
+                    {parsedFeedback.strengths}
+                  </p>
+                </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-700">⚠️ Weaknesses</h3>
-                <p className="whitespace-pre-wrap text-gray-600">
-                  {parsedFeedback.weaknesses}
-                </p>
-              </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">⚠️ Weaknesses</h3>
+                  <p className="whitespace-pre-wrap text-gray-600">
+                    {parsedFeedback.weaknesses}
+                  </p>
+                </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-700">💡 Suggestions</h3>
-                <p className="whitespace-pre-wrap text-gray-600">
-                  {parsedFeedback.suggestions}
-                </p>
+                <div>
+                  <h3 className="font-semibold text-gray-700">
+                    💡 Suggestions
+                  </h3>
+                  <p className="whitespace-pre-wrap text-gray-600">
+                    {parsedFeedback.suggestions}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <p className="text-red-600 text-sm text-center whitespace-pre-line">
-            {feedbackRaw}
-          </p>
-        )}
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <p className="text-red-600 text-sm text-center whitespace-pre-line">
+              {feedbackRaw}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

@@ -2,11 +2,12 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+// ✅ No custom type — just inline `params`
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
-  const resumeId = context.params.id;
+  const {id:resumeId} = await paramsPromise;
 
   const { userId } = await auth();
   if (!userId) {

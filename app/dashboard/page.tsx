@@ -11,11 +11,10 @@ import {
   TableBody,
 } from "@/components/ui/table";
 
-
 import { ResumeUploader } from "@/components/UploadZone";
 import { axiosInstance } from "@/lib/axios";
 import AiFeedbackModal from "@/components/AiFeedbackModal ";
-
+import { Button } from "@/components/ui/button";
 type Resume = {
   id: string;
   title: string;
@@ -27,6 +26,7 @@ type Resume = {
 const DashboardPage = () => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalResumeId, setModalResumeId] = useState<string | null>(null);
 
   const fetchResumes = async () => {
     try {
@@ -48,7 +48,10 @@ const DashboardPage = () => {
       <h1 className="text-4xl font-bold mb-10">Dashboard</h1>
 
       <div className="mb-12">
-        <ResumeUploader onUploadSuccess={fetchResumes} />
+        <ResumeUploader
+          onUploadSuccess={fetchResumes}
+          onParsedFeedback={(id) => setModalResumeId(id)}
+        />
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">History</h2>
@@ -94,7 +97,13 @@ const DashboardPage = () => {
                     {resume.uploadedAt}
                   </TableCell>
                   <TableCell className="text-right">
-                    <AiFeedbackModal resumeId={resume.id} />
+                    <Button
+                      variant="outline"
+                      className="text-blue-600"
+                      onClick={() => setModalResumeId(resume.id)}
+                    >
+                      Analyze Resume
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -102,6 +111,17 @@ const DashboardPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* ✅ Auto-open Modal After Upload */}
+      {modalResumeId && (
+        <AiFeedbackModal
+          resumeId={modalResumeId}
+          open={true}
+          onOpenChange={(val: boolean) => {
+            if (!val) setModalResumeId(null);
+          }}
+        />
+      )}
     </main>
   );
 };

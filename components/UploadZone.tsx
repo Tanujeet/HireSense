@@ -9,9 +9,13 @@ import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
 type ResumeUploaderProps = {
   onUploadSuccess?: () => void;
+  onParsedFeedback?: (resumeId: string) => void;
 };
 
-export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
+export const ResumeUploader = ({
+  onUploadSuccess,
+  onParsedFeedback,
+}: ResumeUploaderProps) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -63,8 +67,11 @@ export const ResumeUploader = ({ onUploadSuccess }: ResumeUploaderProps) => {
       });
 
       console.log("Resume Upload and Analysis Complete!", saveRes.data);
-      router.refresh();
+      const newResumeId = saveRes.data.resume.id; // 👈 assuming backend returns ID
+
+      if (onParsedFeedback) onParsedFeedback(newResumeId); // 👈 open modal with that resume
       if (onUploadSuccess) onUploadSuccess();
+      router.refresh();
     } catch (err: any) {
       console.error("Upload and Analysis Error:", err);
       const message =

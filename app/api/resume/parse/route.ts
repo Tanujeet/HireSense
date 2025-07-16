@@ -14,14 +14,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = await axios.get(fileUrl, {
-      responseType: "arraybuffer",
-    });
-
-    const pdfBuffer = Buffer.from(response.data);
+    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    const pdfBuffer = Buffer.from(response.data); // ✅ Use PDF from URL, not local file
 
     const data = await pdfParse(pdfBuffer);
-
     const parsedText = data.text;
 
     if (!parsedText || parsedText.trim().length < 10) {
@@ -31,20 +27,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      {
-        message: "Resume parsed successfully!",
-        resumeText: parsedText,
-      },
-      { status: 200 }
-    );
-  } catch (err: unknown) {
-    const error = err as Error;
-    console.error("[RESUME/PARSE ERROR]", error.message);
+    return NextResponse.json({
+      message: "Resume parsed successfully!",
+      resumeText: parsedText,
+    });
+  } catch (err: any) {
     return NextResponse.json(
       {
         error: "Failed to parse PDF",
-        details: error.message,
+        details: err.message,
       },
       { status: 500 }
     );

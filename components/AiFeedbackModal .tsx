@@ -37,12 +37,20 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const startAnalysis = async () => {
+    // 1. Open modal first
+    setIsOpen(true);
     setLoading(true);
-    setIsOpen(true); // Automatically open the dialog
+    setFeedbackRaw("");
+    setParsedFeedback(null);
 
     try {
+      // Optional: simulate network delay for smoother UX
+      // await new Promise((r) => setTimeout(r, 1000));
+
+      // 2. Fetch feedback
       const res = await axiosInstance.get(`/resume/${resumeId}/feedback`);
       const feedback = res.data.aiFeedback;
+
       setFeedbackRaw(feedback);
       setParsedFeedback(parseFeedback(feedback));
     } catch (err) {

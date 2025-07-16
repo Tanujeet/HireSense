@@ -8,9 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
-import { axiosInstance } from "@/lib/axios";
 import { Spinner } from "./Spinner";
+import { axiosInstance } from "@/lib/axios";
 
 interface Props {
   resumeId: string;
@@ -36,10 +35,10 @@ const parseFeedback = (feedback: string) => {
 
 const AiFeedbackModal = ({ resumeId }: Props) => {
   const [feedbackRaw, setFeedbackRaw] = useState<string>("");
-  const [loading, setLoading] = useState(false);
   const [parsedFeedback, setParsedFeedback] = useState<ReturnType<
     typeof parseFeedback
   > | null>(null);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = async () => {
@@ -59,14 +58,21 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (open) handleOpen();
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" className="text-blue-600">
           View AI Feedback
         </Button>
       </DialogTrigger>
+
       <DialogContent className="max-w-xl">
-        <DialogTitle className="text-xl font-semibold mb-4">
+        <DialogTitle className="text-center text-xl font-semibold mb-4">
           AI Feedback
         </DialogTitle>
 
@@ -75,31 +81,36 @@ const AiFeedbackModal = ({ resumeId }: Props) => {
             <Spinner />
           </div>
         ) : parsedFeedback ? (
-          <div className="space-y-4 text-sm text-gray-800">
-            <p>
-              <strong>ATS Score:</strong> {parsedFeedback.score}
+          <div className="space-y-6 text-sm text-gray-800 text-center max-w-md mx-auto">
+            <p className="text-lg font-semibold text-blue-600">
+              ATS Score: {parsedFeedback.score}
             </p>
-            <div>
-              <strong>Strengths</strong>
-              <pre className="whitespace-pre-wrap">
-                {parsedFeedback.strengths}
-              </pre>
-            </div>
-            <div>
-              <strong>Weaknesses</strong>
-              <pre className="whitespace-pre-wrap">
-                {parsedFeedback.weaknesses}
-              </pre>
-            </div>
-            <div>
-              <strong>Suggestions</strong>
-              <pre className="whitespace-pre-wrap">
-                {parsedFeedback.suggestions}
-              </pre>
+
+            <div className="text-left space-y-4">
+              <div>
+                <h3 className="font-semibold text-gray-700">✅ Strengths</h3>
+                <p className="whitespace-pre-wrap text-gray-600">
+                  {parsedFeedback.strengths}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-700">⚠️ Weaknesses</h3>
+                <p className="whitespace-pre-wrap text-gray-600">
+                  {parsedFeedback.weaknesses}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-700">💡 Suggestions</h3>
+                <p className="whitespace-pre-wrap text-gray-600">
+                  {parsedFeedback.suggestions}
+                </p>
+              </div>
             </div>
           </div>
         ) : (
-          <p className="text-red-600 text-sm whitespace-pre-line">
+          <p className="text-red-600 text-sm text-center whitespace-pre-line">
             {feedbackRaw}
           </p>
         )}

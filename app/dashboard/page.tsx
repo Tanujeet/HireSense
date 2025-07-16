@@ -27,6 +27,7 @@ const DashboardPage = () => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalResumeId, setModalResumeId] = useState<string | null>(null);
+  const [modalLoading, setModalLoading] = useState<boolean>(false); // ✅ new
 
   const fetchResumes = async () => {
     try {
@@ -49,8 +50,14 @@ const DashboardPage = () => {
 
       <div className="mb-12">
         <ResumeUploader
+          onUploadStart={() => {
+            setModalResumeId("pending"); // show modal with loading state
+          }}
+          onParsedFeedback={(id) => {
+            setModalResumeId(id); // update with actual resume ID after analysis
+            fetchResumes(); // refresh list
+          }}
           onUploadSuccess={fetchResumes}
-          onParsedFeedback={(id) => setModalResumeId(id)}
         />
       </div>
 

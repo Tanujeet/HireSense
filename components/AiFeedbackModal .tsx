@@ -9,6 +9,7 @@ interface Props {
   resumeId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  loading?: boolean; // ✅ add this
 }
 
 const parseFeedback = (feedback: string) => {

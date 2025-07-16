@@ -10,11 +10,13 @@ import type { OurFileRouter } from "@/app/api/uploadthing/core";
 type ResumeUploaderProps = {
   onUploadSuccess?: () => void;
   onParsedFeedback?: (resumeId: string) => void;
+  onUploadStart?: () => void;
 };
 
 export const ResumeUploader = ({
   onUploadSuccess,
   onParsedFeedback,
+  onUploadStart,
 }: ResumeUploaderProps) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -95,6 +97,7 @@ export const ResumeUploader = ({
           setIsProcessing(false);
         }}
         onUploadBegin={() => {
+          if (onUploadStart) onUploadStart();
           setIsProcessing(true);
           setErrorMessage(null);
         }}

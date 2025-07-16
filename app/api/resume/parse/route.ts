@@ -1,12 +1,14 @@
-// app/api/resume/parse/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import * as pdf_to_text from "pdf-to-text";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fileUrl, fileName, resumeTitle } = body;
+    const { fileUrl, fileName } = body;
 
     // --- Input Validation ---
     if (!fileUrl) {
@@ -23,14 +25,6 @@ export async function POST(req: NextRequest) {
       `[API/RESUME/PARSE] Attempting to parse PDF from URL using pdf-to-text: ${fileUrl}`
     );
 
-    // 1. Download the PDF content from the provided URL (e.g., Uploadthing URL)
-    // pdf-to-text can work with a local file path or a Buffer.
-    // For a URL, we'll download it and save it temporarily, then parse.
-    // NOTE: Saving to a temporary file is necessary for pdf-to-text's typical usage.
-    // This adds file system operations, which can be tricky in serverless.
-    // A more robust serverless solution might involve piping the stream directly if pdf-to-text supported it,
-    // or using a dedicated parsing service.
-
     let tempFilePath: string | undefined;
     let parsedText = "";
 
@@ -40,34 +34,23 @@ export async function POST(req: NextRequest) {
       });
       const pdfBuffer = Buffer.from(response.data);
 
-      // Create a temporary file to save the PDF
-      // You'll need Node.js 'fs' and 'path' modules
-      const fs = require("fs");
-      const path = require("path");
-      const os = require("os"); // For os.tmpdir()
-
-      // Generate a unique temporary file name
       tempFilePath = path.join(
         os.tmpdir(),
         `${Date.now()}-${fileName || "resume"}.pdf`
       );
 
-      // Write the buffer to the temporary file
       fs.writeFileSync(tempFilePath, pdfBuffer);
       console.log(
         `[API/RESUME/PARSE] PDF saved to temporary file: ${tempFilePath}`
       );
 
-      // 2. Parse the PDF content using pdf-to-text
-      // pdf_to_text.pdfToText takes a file path
-      parsedText = await new Promise((resolve, reject) => {
+      parsedText = await new Promise<string>((resolve, reject) => {
         const pdftotextPath =
           "C:\\Users\\singh\\OneDrive\\Desktop\\poppler-24.08.0\\Library\\bin\\pdftotext.exe";
-
         pdf_to_text.pdfToText(
           tempFilePath!,
-          { pdftotext_path: pdftotextPath } as any, // 👈 Override type here
-          (err: any, data: string) => {
+          { pdftotext_path: pdftotextPath } as any,
+          (err: Error | null, data: string) => {
             if (err) {
               console.error("[API/RESUME/PARSE] pdf-to-text error:", err);
               return reject(new Error(`pdf-to-text failed: ${err.message}`));
@@ -75,51 +58,48 @@ export async function POST(req: NextRequest) {
             resolve(data);
           }
         );
-        
       });
+
       console.log(
-        `[API/RESUME/PARSE] Successfully parsed PDF content. Length: ${parsedText.length}`
+        `[API/RESUME/PARSE] Successfully parsed PDF. Length: ${parsedText.length}`
       );
-    } catch (downloadOrParseError: any) {
+    } catch (parseError: unknown) {
+      const error = parseError as Error;
       console.error(
-        "[API/RESUME/PARSE] Error in download or pdf-to-text parsing:",
-        downloadOrParseError.message
+        "[API/RESUME/PARSE] Error during download or parse:",
+        error.message
       );
       return NextResponse.json(
         {
           error: "Failed to process PDF content.",
-          details: downloadOrParseError.message,
+          details: error.message,
         },
         { status: 500 }
       );
     } finally {
-      // Clean up the temporary file
-      if (tempFilePath && require("fs").existsSync(tempFilePath)) {
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
         try {
-          require("fs").unlinkSync(tempFilePath);
-          console.log(
-            `[API/RESUME/PARSE] Cleaned up temporary file: ${tempFilePath}`
-          );
-        } catch (cleanupError: any) {
+          fs.unlinkSync(tempFilePath);
+          console.log(`[API/RESUME/PARSE] Deleted temp file: ${tempFilePath}`);
+        } catch (cleanupError: unknown) {
+          const error = cleanupError as Error;
           console.error(
-            "[API/RESUME/PARSE] Error cleaning up temporary file:",
-            cleanupError.message
+            "[API/RESUME/PARSE] Failed to delete temp file:",
+            error.message
           );
-          // This error is not critical enough to return a 500
         }
       }
     }
 
-    // Return the parsed text to the frontend
     return NextResponse.json(
       {
         message: "Resume parsed successfully!",
-        resumeText: parsedText, // Send the extracted text back
+        resumeText: parsedText,
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    // Catch any unexpected errors during the process
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error("[API/RESUME/PARSE] Unhandled Server Error:", error.message);
     return NextResponse.json(
       {
